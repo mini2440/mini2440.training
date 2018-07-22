@@ -20,13 +20,13 @@ struct share {
 
 struct share *sh;
 
-static int second_open(struct inode *indoe, struct file *filp)
+static int second_drv_open(struct inode *indoe, struct file *filp)
 {
         log("second_drv open ok");
         return 0;
 }
 
-static int second_release(struct inode *indoe, struct file *filp)
+static int second_drv_release(struct inode *indoe, struct file *filp)
 {
         log("second_drv release ok");
         return 0;
@@ -34,8 +34,8 @@ static int second_release(struct inode *indoe, struct file *filp)
 
 static struct file_operations second_drv_fops =
 {
-        .open           = second_open,
-        .release        = second_release,
+        .open    = second_drv_open,
+        .release = second_drv_release,
 };
 
 static struct proc_dir_entry* proc_dir = NULL;
@@ -87,7 +87,7 @@ static ssize_t second_drv_proc_read(struct file *filp, char __user *buff, size_t
                 log("read size = %d", count);
         }
 
-        log("second_drv proc_read write ok");
+        log("second_drv proc_read ok");
         return ret;
 }
 
@@ -111,10 +111,9 @@ static ssize_t second_drv_proc_write(struct file *filp, const char __user *buff,
                 log("write size = %d", count);
         }
 
-        log("second_drv proc_write write ok");
+        log("second_drv proc_write ok");
         return ret;
 }
-
 
 static const struct file_operations second_drv_proc_fops = 
 {
@@ -124,29 +123,19 @@ static const struct file_operations second_drv_proc_fops =
         .write  = second_drv_proc_write,
 };
 
-struct cdev *second_drv;                 /* cdev 数据结构 */
-static dev_t second_drv_devno;           /* 设备编号 */
-static struct class *second_drv_class;   /* 用于自动创建设备的类 */
+struct cdev *second_drv;
+static dev_t second_drv_devno;
+static struct class *second_drv_class;
 
 static int __init mod_init(void)
 {
-        /* 从系统获取主设备号，这里指定的驱动名称将会在 /proc/device 下面显示 */
         alloc_chrdev_region(&second_drv_devno, 0, 1, "second_drv_name");
-
-        /* 分配 led 结构 */
         second_drv = cdev_alloc();
-
-        /* 初始化字符设备结构，并绑定操作函数 */
         cdev_init(second_drv, &second_drv_fops); 
         second_drv->owner = THIS_MODULE;
-                
-        /* 将字符设备添加到系统中 */
         cdev_add(second_drv, second_drv_devno, 1);
 
-        /* 在 /sys/class 目录下创建一个 second_drv_class */
         second_drv_class = class_create(THIS_MODULE, "second_drv_class");
-
-        /* 在 /sys/class/second_drv_class 目录下创建一个 second_drv_device */
         device_create(second_drv_class, NULL, second_drv_devno, "second_drv_device");
 
         /* 申请 4M 内存，申请的内存比较大，比较容易出错，务必要检查函数返回值 */
@@ -179,13 +168,8 @@ static int __init mod_init(void)
 
 static void __exit mod_exit(void)
 {
-        /* 从系统中移除字符设备 */
         cdev_del(second_drv);
-
-        /* 释放申请的设备号 */
         unregister_chrdev_region(second_drv_devno, 1);
-
-        /* 销毁之前创建的 device 和 class */
         device_destroy(second_drv_class, second_drv_devno);
         class_destroy(second_drv_class);
 
