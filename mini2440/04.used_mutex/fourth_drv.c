@@ -44,6 +44,7 @@ static ssize_t fourth_drv_read(struct file *filp, char __user *buff, size_t cnt,
         if(count > MEM_SIZE - p)
                 count = MEM_SIZE - p;
 
+        mutex_lock(&share_mutex);
         if(copy_to_user(buff, sh->mem + p, count))
                 ret = -EFAULT;
         else
@@ -52,6 +53,7 @@ static ssize_t fourth_drv_read(struct file *filp, char __user *buff, size_t cnt,
                 ret = count;
                 log("read size = %d", count);
         }
+        mutex_unlock(&share_mutex);
 
         log("fourth_drv read ok");
         return ret;
@@ -81,6 +83,8 @@ static ssize_t fourth_drv_write(struct file *filp, const char __user *buff, size
                 {
                         *(sh->mem + p + i) = *(buff + i);
                         log("write slow time = %d", i);
+                        mdelay(1000);
+                        schedule();
                 }
                 log("write slow end");
         }
@@ -91,6 +95,8 @@ static ssize_t fourth_drv_write(struct file *filp, const char __user *buff, size
                 {
                         *(sh->mem + p + i) = *(buff + i);
                         log("write slow time = %d", i);
+                        mdelay(50);
+                        schedule();
                 }
                 log("write fast end");
         }
