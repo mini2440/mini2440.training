@@ -21,10 +21,10 @@ void *wirite_share_mem(void *threadid)
         wrbuf = malloc(RW_BUFF_SIZE);
         rdbuf = malloc(RW_BUFF_SIZE);
 
-        fd = open("/dev/fifth_drv_device", O_RDWR);
+        fd = open("/dev/sixth_drv_device", O_RDWR);
         if(fd < 0)
         {
-                printf("[fifth_app] share mem node open fail\n");
+                printf("[sixth_app] share mem node open fail\n");
                 return -1;
         }
 
@@ -64,16 +64,16 @@ int main(int argc, char *argv[])
         /* 循环创建 2 个线程 */
         for(t = 0 ; t < NUM_THREADS; t++)
         {
-                printf("[fifth_app] creating thread %ld\n", t);
+                printf("[sixth_app] creating thread %ld\n", t);
                 rc = pthread_create(&threads[t], NULL, wirite_share_mem, (void *)t);
                 if (rc)
                 {
-                        printf("[fifth_app] ERROR; return code from pthread_create() is %d\n", rc);
+                        printf("[sixth_app] ERROR; return code from pthread_create() is %d\n", rc);
                         exit(-1);
                 }
                 sleep(2);
         }
-        printf("[fifth_app] main: exit!\n");
+        printf("[sixth_app] main: exit!\n");
         pthread_exit(NULL);
         return 0;
 }
