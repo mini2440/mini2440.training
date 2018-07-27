@@ -83,8 +83,6 @@ static ssize_t fifth_drv_write(struct file *filp, const char __user *buff, size_
                 count = MEM_SIZE - p;
 
         mutex_lock(&share_mutex);
-        data_ready_flag = 1;
-        wake_up_interruptible(&share_wait_queue_head);
         if(copy_from_user(sh->mem + p, buff, count))
                 ret = -EFAULT;
         else
@@ -93,6 +91,8 @@ static ssize_t fifth_drv_write(struct file *filp, const char __user *buff, size_
                 ret = count;
                 log("write size = %d", count);
         }
+        data_ready_flag = 1;
+        wake_up_interruptible(&share_wait_queue_head);
         mutex_unlock(&share_mutex);
 
         log("fifth_drv write ok");
