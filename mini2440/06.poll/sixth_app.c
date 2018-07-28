@@ -1,22 +1,28 @@
 #include <stdio.h>
 #include <fcntl.h>      /* O_RDWR */
-#include <pthread.h>    /* pthread_create */
 #include <stdlib.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define RW_BUFF_SIZE (5)
-#define NUM_THREADS 2
 
-/* 线程函数 */
-void *wirite_share_mem(void *threadid)
+int main(int argc, char *argv[])
 {
-        long tid;
-        tid = (long)threadid;
-
         unsigned char *wrbuf;
         unsigned char *rdbuf;
         int row_count = 32;
         int i;
         int fd;
+
+        
+        fd_set fds;
+
+        int cnt = 0;
+
+        /* 定义时间结构体 */
+        struct timeval time;
 
         wrbuf = malloc(RW_BUFF_SIZE);
         rdbuf = malloc(RW_BUFF_SIZE);
@@ -25,19 +31,31 @@ void *wirite_share_mem(void *threadid)
         if(fd < 0)
         {
                 printf("[sixth_app] share mem node open fail\n");
-                return -1;
+                pthread_exit(NULL);
         }
 
-        /* 线程0作为读线程，线程1作为写线程 */
-        switch(tid)
+        while(1)
         {
-                case 1:
-                        for(i = 0; i < RW_BUFF_SIZE; i++)
-                                *(wrbuf + i) = tid + 'A';
-                        lseek(fd, 0, 0);
-                        write(fd, wrbuf, RW_BUFF_SIZE);
-                        break;
-                case 0:
+                /* 清空文件描述符 */
+                FD_ZERO(&fds);
+
+                /* 添加文件描述符，可以设置多个 */
+                FD_SET(fd, &fds);
+
+                /* 填充时间结构 */
+                time.tv_sec  = 5;
+                time.tv_usec = 0;
+
+                /* 检测事件 */
+                if(select(fd+1, &fds, &fds, &fds, &time) <= 0) //判断是否有事件产生
+                {
+                        cnt++;
+                        printf("[sixth_app] cnt = %d\n", cnt);
+                        continue;
+                }
+                else
+                {
+                        printf("[sixth_app] data arrive\n");
                         lseek(fd, 0, 0);
                         read(fd, rdbuf, RW_BUFF_SIZE);
                         for(i = 0; i < RW_BUFF_SIZE; i++)
@@ -49,31 +67,12 @@ void *wirite_share_mem(void *threadid)
                                         printf("\n%*d:", 2, i / row_count + 2);
                         }
                         printf("\n");
+                }
+
+                /* 测试文件是否可读写 */
+                printf("status: %d\n", FD_ISSET(fd, &fds));
         }
 
         close(fd);
-        pthread_exit(NULL);
-}
-
-int main(int argc, char *argv[])
-{
-        pthread_t threads[NUM_THREADS];
-        int rc;
-        long t;
-
-        /* 循环创建 2 个线程 */
-        for(t = 0 ; t < NUM_THREADS; t++)
-        {
-                printf("[sixth_app] creating thread %ld\n", t);
-                rc = pthread_create(&threads[t], NULL, wirite_share_mem, (void *)t);
-                if (rc)
-                {
-                        printf("[sixth_app] ERROR; return code from pthread_create() is %d\n", rc);
-                        exit(-1);
-                }
-                sleep(2);
-        }
-        printf("[sixth_app] main: exit!\n");
-        pthread_exit(NULL);
         return 0;
 }

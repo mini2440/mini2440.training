@@ -8,6 +8,7 @@
 #include <linux/slab.h>         /* kmalloc ... */
 #include <linux/proc_fs.h>      /* procfs ... */
 #include <linux/delay.h>
+#include <linux/poll.h>
 
 /* simple log */
 #define log(fmt, arg...)\
@@ -49,13 +50,6 @@ static ssize_t sixth_drv_read(struct file *filp, char __user *buff, size_t cnt, 
                 count = MEM_SIZE - p;
 
         mutex_lock(&share_mutex);
-        while(data_ready_flag != 1)
-        {
-                mutex_unlock(&share_mutex);
-                wait_event_interruptible(share_wait_queue_head, data_ready_flag == 1);
-                mutex_lock(&share_mutex);
-        }
-
         if(copy_to_user(buff, sh->mem + p, count))
                 ret = -EFAULT;
         else
@@ -64,7 +58,6 @@ static ssize_t sixth_drv_read(struct file *filp, char __user *buff, size_t cnt, 
                 ret = count;
                 log("read size = %d", count);
         }
-        data_ready_flag = 0;
         mutex_unlock(&share_mutex);
 
         log("sixth_drv read ok");
@@ -127,6 +120,20 @@ static loff_t sixth_drv_llseek(struct file *filp, loff_t offset, int whence)
         return new_pos;
 }
 
+static unsigned int sixth_drv_poll(struct file *filp, struct poll_table_struct *wait)
+{
+        poll_wait(filp, &share_wait_queue_head, wait);
+
+        if(data_ready_flag != 1)
+        {
+                return 0;
+        }
+
+        data_ready_flag = 0;
+
+        return POLLIN;
+}
+
 static struct file_operations sixth_drv_fops =
 {
         .open    = sixth_drv_open,
@@ -134,6 +141,7 @@ static struct file_operations sixth_drv_fops =
         .release = sixth_drv_release,
         .read    = sixth_drv_read,
         .write   = sixth_drv_write,
+        .poll    = sixth_drv_poll,
 };
 
 struct cdev *sixth_drv;
