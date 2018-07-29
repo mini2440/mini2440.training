@@ -25,7 +25,7 @@ void *wirite_share_mem(void *threadid)
         if(fd < 0)
         {
                 printf("[fourth_app] share mem node open fail\n");
-                return -1;
+                pthread_exit(NULL);
         }
 
         /* 线程2作为读线程，线程0和线程1作为写线程 */

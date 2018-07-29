@@ -8,13 +8,13 @@
 #include <linux/slab.h>         /* kmalloc ... */
 #include <linux/proc_fs.h>      /* procfs ... */
 #include <linux/delay.h>
+#include <linux/sched.h>
 
 /* simple log */
 #define log(fmt, arg...)\
         printk(KERN_INFO "[Paul][%s][%d] "fmt"\n", __func__, __LINE__, ##arg);
 
 #define MEM_SIZE (4*1024*1024)
-
 struct share {
         unsigned char mem[MEM_SIZE];  // share mem
 };
@@ -63,7 +63,7 @@ static ssize_t fourth_drv_write(struct file *filp, const char __user *buff, size
         int ret = 0;
         int i = 0;
 
-        static whois = 0;
+        static int whois = 0;
         whois++;
 
         if(p >= MEM_SIZE)
