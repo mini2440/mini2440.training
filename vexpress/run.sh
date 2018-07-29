@@ -34,17 +34,17 @@ elif [ $1 -eq 3 ]; then
 elif [ $1 -eq 41 ]; then
     cp -av /media/sf_share/04.unused_mutex ./
     cd 04.unused_mutex
-    arm-linux-gnueabi-gcc fourth_app.c -o app_fourth
+    arm-linux-gnueabi-gcc -pthread fourth_app.c -o app_fourth
 
 elif [ $1 -eq 42 ]; then
     cp -av /media/sf_share/04.used_mutex ./
     cd 04.used_mutex
-    arm-linux-gnueabi-gcc fourth_app.c -o app_fourth
+    arm-linux-gnueabi-gcc -pthread fourth_app.c -o app_fourth
 
 elif [ $1 -eq 5 ]; then
     cp -av /media/sf_share/05.wait ./
     cd 05.wait
-    arm-linux-gnueabi-gcc fifth_app.c -o app_fifth
+    arm-linux-gnueabi-gcc -pthread fifth_app.c -o app_fifth
 
 elif [ $1 -eq 6 ]; then
     cp -av /media/sf_share/06.poll ./
