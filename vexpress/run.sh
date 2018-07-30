@@ -66,7 +66,7 @@ if [ $? -ne 0 ]; then
     exit 1;
 fi
 
-### 删除开发板行原来的驱动和测试程序
+### 删除开发板上原来的驱动和测试程序
 sudo rm -rf /home/baohua/develop/linux/extra/img/*.ko
 sudo rm -rf /home/baohua/develop/linux/extra/img/app_*
 
